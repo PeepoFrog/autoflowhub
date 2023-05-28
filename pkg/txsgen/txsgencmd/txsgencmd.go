@@ -58,37 +58,32 @@ func New() *cobra.Command {
 	}
 
 	accgencmd.PersistentFlags().StringP("keys-dir", "d", "", "Keys directory (relative or absolute path)")
-	accgencmd.PersistentFlags().IntP("count", "c", 0, "Count of keys which will be added")
 	accgencmd.PersistentFlags().IntP("block", "b", 0, "which block to listen")
-	accgencmd.PersistentFlags().IntP("txAmount", "t", 0, "how much transactions from generated users you want")
+	accgencmd.PersistentFlags().IntP("txAmount", "t", 0, "how much transactions from generated users you want, if = 0 then default value = 7000000/4")
 
 	return accgencmd
 }
 
 func processTransactions(client *client.Client, list []string, BlockToListen, TxAmount int) {
-	waitGroup := &sync.WaitGroup{}
-	c := make(chan int)
-
-	go docker.BlockListener(client, "validator", BlockToListen, waitGroup, c)
-
-	arr := make([]*docker.User, len(list))
+	if TxAmount == 0 {
+		TxAmount = 7000000 / 4
+	}
+	blockTolisten := BlockToListen
+	if len(list) < 1 {
+		panic("keys list empty")
+	}
+	var arr []*docker.User = make([]*docker.User, len(list))
 	for i := range list {
 		arr[i] = &docker.User{Key: list[i], Balance: 0}
 	}
-
-	disruptSum := TxAmount * 100
-	docker.DisruptTokensBetweenAllAccounts(client, waitGroup, disruptSum, arr[:])
-
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(1)
+	c := make(chan int)
+	go docker.BlockListener(client, "validator", blockTolisten, waitGroup, c)
 	<-c
-	waitGroup.Wait()
-
-	for _, u := range arr {
-		fmt.Println(u)
-	}
-
 	txcount := docker.TransactionSpam(client, waitGroup, TxAmount, arr)
 	waitGroup.Wait()
-	fmt.Println(txcount)
+	fmt.Println(*txcount, "txs was completed")
 }
 
 func readKeys(path string) ([]string, error) {

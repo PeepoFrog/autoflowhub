@@ -28,7 +28,7 @@ func New() *cobra.Command {
 				log.Fatalf("Error reading keys-dir flag: %v", err)
 				return err
 			}
-			countOfTxs, err := cmd.Flags().GetInt("count")
+			countOfTxs, err := cmd.Flags().GetInt("countOfTxs")
 			if err != nil {
 				log.Fatalf("Error reading txs count flag: %v", err)
 				return err
@@ -58,8 +58,8 @@ func New() *cobra.Command {
 	}
 
 	accgencmd.PersistentFlags().StringP("keys-dir", "d", "", "Keys directory (relative or absolute path)")
-	accgencmd.PersistentFlags().IntP("block", "b", 0, "which block to listen")
-	accgencmd.PersistentFlags().IntP("txAmount", "t", 0, "how much transactions from generated users you want, if = 0 then default value = 7000000/4")
+	accgencmd.PersistentFlags().IntP("blockToListen", "b", 0, "which block to listen")
+	accgencmd.PersistentFlags().IntP("countOfTxs", "c", 0, "how much transactions from generated users you want, if = 0 then default value = 7000000/4")
 
 	return accgencmd
 }

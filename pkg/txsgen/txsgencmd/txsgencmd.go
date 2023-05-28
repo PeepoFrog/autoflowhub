@@ -1,4 +1,4 @@
-package accgencmd
+package txsgencmd
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/docker/docker/client"
-	"github.com/mrlutik/autoflowhub/pkg/accgen/docker"
 	"github.com/mrlutik/autoflowhub/pkg/keygen/usecase"
+	"github.com/mrlutik/autoflowhub/pkg/txsgen/docker"
 	"github.com/spf13/cobra"
 )
 

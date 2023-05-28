@@ -29,7 +29,7 @@ func New() *cobra.Command {
 				log.Fatalf("Error reading keys-dir flag: %v", err)
 				return err
 			}
-			countOfTxs, err := cmd.Flags().GetInt("count")
+			countOfTxs, err := cmd.Flags().GetInt("txAmount")
 			if err != nil {
 				log.Fatalf("Error reading txs count flag: %v", err)
 				return err

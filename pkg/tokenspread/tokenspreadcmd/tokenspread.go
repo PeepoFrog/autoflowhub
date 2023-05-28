@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	use              = "accgen"
-	shortDescription = "command to generate accounts for Kira Network testnet"
+	use              = "tkspread"
+	shortDescription = "command to spread tokens on generated accounts"
 	longDescription  = "dummy field for some very useful longdescription"
 )
 

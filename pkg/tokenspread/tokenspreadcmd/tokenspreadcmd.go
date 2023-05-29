@@ -39,7 +39,7 @@ func New() *cobra.Command {
 			log.Println("Amount of txs to propogate: ", countOfTxs)
 			log.Println("Starting to spread tokens:")
 
-			client, err := client.NewClientWithOpts(client.FromEnv)
+			client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 			if err != nil {
 				return err
 			}

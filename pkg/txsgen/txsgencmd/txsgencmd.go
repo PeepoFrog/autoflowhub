@@ -43,7 +43,7 @@ func New() *cobra.Command {
 			log.Println("Waiting for block: ", blockToListen)
 			log.Println("Starting to propogate txs:")
 
-			client, err := client.NewClientWithOpts(client.FromEnv)
+			client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 			if err != nil {
 				return err
 			}

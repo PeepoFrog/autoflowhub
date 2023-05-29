@@ -52,6 +52,9 @@ func New() *cobra.Command {
 			if err != nil && list != nil {
 				return err
 			}
+			if dirOfKeys == "" || blockToListen == 0 {
+				log.Fatal("Please provide all required parameters: blockToListen, keys-dir. -h for help")
+			}
 			processTransactions(client, list, blockToListen, countOfTxs)
 			return nil
 		},

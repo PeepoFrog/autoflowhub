@@ -48,6 +48,9 @@ func New() *cobra.Command {
 			if err != nil && list != nil {
 				return err
 			}
+			if dirOfKeys == "" {
+				log.Fatal("Please provide all required parameters: keys-dir. -h for help")
+			}
 			processTransactions(client, list, countOfTxs)
 			return nil
 		},

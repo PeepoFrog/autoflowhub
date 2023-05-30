@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"regexp"
 	"strconv"
 
@@ -58,13 +59,13 @@ func GetBlockHeight(dockerClient *client.Client, containerName string) string {
 func RunTransaction(dockerClient *client.Client, containerName, source, destination, amount, demon string, txAmount, sleepTimeBetweenTxInMeeleseconds int) {
 	//    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees "${FEE_AMOUNT}${FEE_DENOM}" --output=json --yes --home=$SEKAID_HOME | txAwait 180
 	for i := 0; i < txAmount; i++ {
-		command := "sekaid tx bank send " + source + " " + destination + " " + amount + "ukex --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --output=json --yes --home=$SEKAID_HOME " //можна додати --broadcast-mode=async але воно просто ігнорує помилку але не віксить її
+		command := "sekaid tx bank send " + source + " " + destination + " " + amount + "ukex --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --output=json --yes --home=$SEKAID_HOME --broadcast-mode=async" //можна додати --broadcast-mode=async але воно просто ігнорує помилку але не віксить її
 		fmt.Println(command)
 		out, err := ExecCommandInContainer(containerName, []string{`bash`, `-c`, command}, dockerClient)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(string(out))
+		fmt.Println("OUT:   ", string(out))
 		if sleepTimeBetweenTxInMeeleseconds > 0 {
 			time.Sleep(time.Millisecond * time.Duration(sleepTimeBetweenTxInMeeleseconds))
 		}
@@ -76,8 +77,8 @@ func RunTransaction(dockerClient *client.Client, containerName, source, destinat
 func ExecCommandInContainer(containerID string, command []string, Cli *client.Client) ([]byte, error) {
 	execCreateResponse, err := Cli.ContainerExecCreate(context.Background(), containerID, types.ExecConfig{
 		Cmd:          command,
-		AttachStdout: true,
-		AttachStderr: true,
+		AttachStdout: false,
+		AttachStderr: false,
 	})
 	if err != nil {
 		return nil, err
@@ -98,25 +99,41 @@ func ExecCommandInContainer(containerID string, command []string, Cli *client.Cl
 }
 func TransactionSpam(dockerClient *client.Client, wg *sync.WaitGroup, txAmount int, users []*User) *int {
 	fmt.Println("tx spamming")
-
 	amountOfIterationForOneAcc := txAmount / len(users)
 	if amountOfIterationForOneAcc < 1 {
 		amountOfIterationForOneAcc = 1
 	}
+
 	fmt.Println("TRANSAKTION AMOUNNT", txAmount, len(users), amountOfIterationForOneAcc)
-	fmt.Println("TOTAL TRANSAKTION AMOUNNT", len(users)*amountOfIterationForOneAcc)
 	txCount := 0
-	for i := 0; i < amountOfIterationForOneAcc; i++ {
+	iterationCount := 0
+
+	for i := 0; i <= amountOfIterationForOneAcc; i++ {
+		if txCount >= txAmount {
+			break
+		}
 		for u := range users {
+			if txCount >= txAmount {
+				break
+			}
+			
+			txCount++
+		
+			// wg.Add(1)
+			// go func() {
+
 			RunTransaction(dockerClient, "validator", users[u].Key, users[u].Key, "1", "ukex", 1, 0)
+			log.Println("+1tx", txCount, "; Iterations for one acc:", iterationCount, "Current acc:", u)
 			//need to calibrate time in miliseconds
 			//for 1750000 transactions *100miliseconds = 48h
-			time.Sleep(time.Millisecond * 100)
-			fmt.Println("+1tx", u)
-			txCount++
+			// wg.Done()
+			// }()
 		}
-		fmt.Println(txCount)
+		// time.Sleep(time.Millisecond * 50)
+		iterationCount++
+		// fmt.Println(txCount)
 	}
+	fmt.Println(amountOfIterationForOneAcc, iterationCount, txCount)
 	return &txCount
 
 }
@@ -127,7 +144,7 @@ func DisruptTokensBetweenAllAccounts(dockerClient *client.Client, wg *sync.WaitG
 	divider := totalUsers / 100
 	var firstIterationWalletsSum int
 	if divider > 0 {
-		firstIterationWalletsSum = totalAmountOftokens / divider
+		firstIterationWalletsSum = totalAmountOftokens/divider + divider*100
 	} else {
 		divider = totalUsers
 		firstIterationWalletsSum = totalAmountOftokens

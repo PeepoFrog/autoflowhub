@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/mrlutik/autoflowhub/pkg/keygen/usecase"
@@ -52,8 +53,8 @@ func New() *cobra.Command {
 			if err != nil && list != nil {
 				return err
 			}
-			if dirOfKeys == "" || blockToListen == 0 {
-				log.Fatal("Please provide all required parameters: blockToListen, keys-dir. -h for help")
+			if dirOfKeys == "" {
+				log.Fatal("Please provide all required parameters: keys-dir. -h for help")
 			}
 			processTransactions(client, list, blockToListen, countOfTxs)
 			return nil
@@ -80,13 +81,16 @@ func processTransactions(client *client.Client, list []string, BlockToListen, Tx
 		arr[i] = &docker.User{Key: list[i], Balance: 0}
 	}
 	waitGroup := &sync.WaitGroup{}
-	waitGroup.Add(1)
-	c := make(chan int)
-	go docker.BlockListener(client, "validator", blockTolisten, waitGroup, c)
-	<-c
+	if blockTolisten != 0 {
+		waitGroup.Add(1)
+		c := make(chan int)
+		go docker.BlockListener(client, "validator", blockTolisten, waitGroup, c)
+		<-c
+	}
+	now := time.Now()
 	txcount := docker.TransactionSpam(client, waitGroup, TxAmount, arr)
 	waitGroup.Wait()
-	fmt.Println(*txcount, "txs was completed")
+	fmt.Println(*txcount, "txs was completed time since tx propagation begins", time.Since(now))
 }
 
 func readKeys(path string) ([]string, error) {
